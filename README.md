@@ -1,2 +1,539 @@
-# Fortune-telling-TESTED
-Nothing don't try it
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ไพ่ทำนายโชคชะตา Among Us</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Mitr:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --glass-bg: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.2);
+    --glass-shadow: rgba(0,0,0,0.3);
+    --accent: #a78bfa;
+    --accent2: #38bdf8;
+    --gold: #fbbf24;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: #fff;
+    position: relative;
+  }
+  body::before {
+    content:'';position:fixed;top:-20%;left:-10%;width:60vw;height:60vw;
+    background: radial-gradient(circle, rgba(167,139,250,0.25) 0%, transparent 70%);
+    border-radius:50%;animation: blobMove 10s ease-in-out infinite alternate;
+    pointer-events:none;z-index:0;
+  }
+  body::after {
+    content:'';position:fixed;bottom:-20%;right:-10%;width:50vw;height:50vw;
+    background: radial-gradient(circle, rgba(56,189,248,0.2) 0%, transparent 70%);
+    border-radius:50%;animation: blobMove 14s ease-in-out infinite alternate-reverse;
+    pointer-events:none;z-index:0;
+  }
+  @keyframes blobMove { from{transform:translate(0,0) scale(1);}to{transform:translate(5%,5%) scale(1.1);} }
+
+  .container {
+    position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:2rem 1rem 5rem;
+  }
+
+  /* Header */
+  .header {
+    text-align:center;margin-bottom:2.5rem;padding:2.5rem 2rem;
+    background:var(--glass-bg);backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid var(--glass-border);border-radius:32px;
+    box-shadow:0 8px 32px var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .header h1 {
+    font-family:'Mitr',sans-serif;font-size:clamp(1.8rem,5vw,3rem);
+    background:linear-gradient(90deg,#a78bfa,#38bdf8,#fbbf24);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem;
+  }
+  .header p { color:rgba(255,255,255,0.6);font-size:1.05rem;font-weight:300; }
+  .stars { font-size:1.5rem;letter-spacing:4px;margin-bottom:.8rem;animation:starPulse 2s ease-in-out infinite; }
+  @keyframes starPulse { 0%,100%{opacity:1;}50%{opacity:0.5;} }
+
+  .phase-text {
+    text-align:center;font-size:1.2rem;color:rgba(255,255,255,0.75);
+    margin-bottom:1.5rem;min-height:2rem;
+  }
+
+  /* Cards grid */
+  .cards-area { display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-bottom:2rem; }
+  .card-wrapper { perspective:1000px;cursor:pointer; }
+  .card {
+    width:108px;height:152px;position:relative;transform-style:preserve-3d;
+    transition:transform 0.6s cubic-bezier(.4,0,.2,1), box-shadow 0.3s, opacity 0.4s, filter 0.4s;
+    border-radius:18px;
+  }
+  .card:hover:not(.flipped):not(.dimmed) { transform:translateY(-10px) rotateY(6deg); }
+  .card.flipped { transform:rotateY(180deg); }
+  .card.selected { transform:rotateY(180deg) translateY(-14px);box-shadow:0 0 36px var(--accent); }
+  .card.dimmed { opacity:0.3;pointer-events:none;filter:saturate(0.2); }
+  .card-face {
+    position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;
+  }
+  .card-back {
+    background:linear-gradient(135deg,rgba(167,139,250,0.3),rgba(56,189,248,0.2));
+    backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.25);
+    box-shadow:0 8px 24px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.2);overflow:hidden;
+  }
+  .card-back::before { content:'';position:absolute;inset:6px;border:1px solid rgba(255,255,255,0.15);border-radius:12px; }
+  .card-back .suit { font-size:2.5rem;animation:floatSuit 3s ease-in-out infinite; }
+  @keyframes floatSuit { 0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);} }
+  .card-back .label { font-size:0.6rem;color:rgba(255,255,255,0.5);margin-top:4px;letter-spacing:2px;text-transform:uppercase; }
+  .card-front {
+    transform:rotateY(180deg);background:rgba(15,12,41,0.88);backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.2);box-shadow:0 8px 32px rgba(0,0,0,0.5);overflow:hidden;padding:6px;
+  }
+  .card-name { font-size:0.58rem;text-align:center;color:rgba(255,255,255,0.9);font-family:'Mitr',sans-serif;margin-top:4px;line-height:1.2;padding:0 2px; }
+
+  /* Glass panel base */
+  .glass-panel {
+    background:var(--glass-bg);backdrop-filter:blur(24px) saturate(180%);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid var(--glass-border);
+    border-radius:28px;box-shadow:0 8px 32px var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,0.12);
+    padding:2rem;margin-top:2rem;
+    animation:fadeUp 0.6s ease forwards;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);} }
+
+  /* Question area */
+  .question-area { display:none; }
+  .question-area.visible { display:block; }
+  .question-area h2 {
+    font-family:'Mitr',sans-serif;font-size:1.4rem;text-align:center;margin-bottom:.4rem;
+    background:linear-gradient(90deg,#a78bfa,#38bdf8);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .question-area .sub { text-align:center;font-size:.9rem;color:rgba(255,255,255,0.5);margin-bottom:1.5rem; }
+
+  .mini-cards { display:flex;justify-content:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap; }
+  .mini-card {
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);
+    border-radius:16px;padding:.6rem .9rem;min-width:90px;
+  }
+  .mini-card .mc-pos { font-size:.6rem;color:var(--accent);letter-spacing:1px;text-transform:uppercase; }
+  .mini-card .mc-name { font-size:.75rem;color:rgba(255,255,255,0.85);font-family:'Mitr',sans-serif; }
+
+  .question-input {
+    width:100%;padding:1rem 1.2rem;background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.2);border-radius:16px;color:#fff;
+    font-family:'Sarabun',sans-serif;font-size:1rem;resize:none;height:100px;
+    backdrop-filter:blur(8px);transition:border-color 0.3s,box-shadow 0.3s;outline:none;
+    margin-bottom:1rem;display:block;
+  }
+  .question-input:focus { border-color:var(--accent);box-shadow:0 0 0 3px rgba(167,139,250,0.2); }
+  .question-input::placeholder { color:rgba(255,255,255,0.3); }
+
+  .ask-btn {
+    width:100%;padding:1rem;
+    background:linear-gradient(135deg,rgba(167,139,250,0.4),rgba(56,189,248,0.3));
+    border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(12px);
+    color:#fff;font-family:'Mitr',sans-serif;font-size:1.05rem;
+    border-radius:50px;cursor:pointer;transition:all 0.3s;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .ask-btn:hover:not(:disabled) {
+    background:linear-gradient(135deg,rgba(167,139,250,0.6),rgba(56,189,248,0.5));
+    transform:translateY(-2px);box-shadow:0 8px 30px rgba(167,139,250,0.4);
+  }
+  .ask-btn:disabled { opacity:0.5;cursor:not-allowed; }
+
+  /* AI response */
+  .ai-response { display:none; }
+  .ai-response.visible { display:block; }
+  .ai-response-inner {
+    background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(56,189,248,0.07));
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid rgba(167,139,250,0.35);border-radius:28px;
+    box-shadow:0 8px 40px rgba(167,139,250,0.18),inset 0 1px 0 rgba(255,255,255,0.1);
+    padding:2rem;margin-top:2rem;animation:fadeUp 0.5s ease forwards;
+  }
+  .ai-header { display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,0.1); }
+  .ai-avatar {
+    width:50px;height:50px;background:linear-gradient(135deg,#a78bfa,#38bdf8);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;
+    box-shadow:0 0 20px rgba(167,139,250,0.5);animation:glowPulse 2s ease-in-out infinite;
+  }
+  @keyframes glowPulse { 0%,100%{box-shadow:0 0 20px rgba(167,139,250,0.5);}50%{box-shadow:0 0 38px rgba(167,139,250,0.85);} }
+  .ai-title { font-family:'Mitr',sans-serif;font-size:1.1rem; }
+  .ai-subtitle { font-size:.78rem;color:rgba(255,255,255,0.45); }
+
+  .rc-chips { display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem; }
+  .rc-chip {
+    display:flex;align-items:center;gap:6px;padding:.35rem .85rem;
+    background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:50px;font-size:.78rem;
+  }
+  .rc-chip .dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+
+  .fortune-text { font-size:1rem;line-height:2;color:rgba(255,255,255,0.88);white-space:pre-wrap;min-height:3rem; }
+  .cursor { display:inline-block;width:2px;height:1.1em;background:var(--accent);animation:blink .7s step-end infinite;vertical-align:middle;margin-left:2px; }
+  @keyframes blink { 0%,100%{opacity:1;}50%{opacity:0;} }
+
+  .loader { display:flex;gap:6px;justify-content:center;padding:1.5rem 0; }
+  .loader span { width:10px;height:10px;border-radius:50%;background:var(--accent);animation:dotBounce 1.2s ease-in-out infinite; }
+  .loader span:nth-child(2){animation-delay:.2s;background:var(--accent2);}
+  .loader span:nth-child(3){animation-delay:.4s;background:var(--gold);}
+  @keyframes dotBounce { 0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-14px);} }
+
+  /* Card meanings */
+  .result-cards { display:none;flex-wrap:wrap;justify-content:center;gap:1rem;margin-top:2rem; }
+  .result-cards.visible { display:flex; }
+  .result-card {
+    background:var(--glass-bg);backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid var(--glass-border);border-radius:20px;padding:1.2rem 1rem;
+    width:220px;text-align:center;
+    box-shadow:0 8px 32px var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,0.1);
+    animation:cardReveal 0.5s ease forwards;opacity:0;
+  }
+  .result-card:nth-child(2){animation-delay:.15s;}
+  .result-card:nth-child(3){animation-delay:.3s;}
+  @keyframes cardReveal { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;} }
+  .pos-label { font-size:.65rem;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:.4rem; }
+  .rc-name { font-family:'Mitr',sans-serif;font-size:1rem;color:var(--gold);margin:.4rem 0; }
+  .rc-meaning { font-size:.78rem;color:rgba(255,255,255,0.65);line-height:1.6; }
+
+  .reset-btn {
+    display:block;margin:2rem auto 0;padding:.9rem 2.5rem;
+    background:linear-gradient(135deg,rgba(167,139,250,0.3),rgba(56,189,248,0.2));
+    border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(12px);
+    color:#fff;font-family:'Mitr',sans-serif;font-size:1rem;border-radius:50px;cursor:pointer;
+    transition:all 0.3s;box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  }
+  .reset-btn:hover { background:linear-gradient(135deg,rgba(167,139,250,0.5),rgba(56,189,248,0.4));transform:translateY(-2px);box-shadow:0 8px 30px rgba(167,139,250,0.4); }
+
+  /* Ripple & teardrops */
+  .ripple {
+    position:fixed;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0);
+    animation:rippleOut 0.9s ease-out forwards;
+    background:radial-gradient(circle,rgba(167,139,250,0.4) 0%,rgba(56,189,248,0.2) 40%,transparent 70%);
+    border:2px solid rgba(255,255,255,0.3);z-index:9999;
+  }
+  @keyframes rippleOut { to{transform:translate(-50%,-50%) scale(1);opacity:0;} }
+  .teardrop {
+    position:fixed;pointer-events:none;z-index:9998;width:8px;height:13px;
+    border-radius:50% 50% 50% 50%/60% 60% 40% 40%;animation:dropFall 1s ease-in forwards;
+  }
+  @keyframes dropFall {
+    0%{transform:translate(-50%,-50%) scale(0) rotate(180deg);opacity:1;}
+    100%{transform:translate(-50%,calc(-50% + 130px)) scale(1) rotate(180deg);opacity:0;}
+  }
+
+  @media(max-width:600px) {
+    .card{width:85px;height:120px;}
+    .result-card{width:calc(100% - 2rem);max-width:300px;}
+    .mini-card{min-width:76px;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="stars">✦ ✧ ✦ ✧ ✦</div>
+    <h1>🔮 ไพ่ทำนายโชคชะตา</h1>
+    <p>เลือกไพ่ 3 ใบ · ถามคำถาม · รับคำทำนายจากจักรวาล Among Us</p>
+  </div>
+
+  <div class="phase-text" id="phaseText">✨ แตะที่ไพ่เพื่อเลือก 3 ใบที่ดึงดูดใจคุณ</div>
+
+  <div class="cards-area" id="cardsArea"></div>
+
+  <!-- ─── STEP 2: Question Input ─── -->
+  <div class="question-area glass-panel" id="questionArea">
+    <h2>🌟 ไพ่ 3 ใบถูกเลือกแล้ว!</h2>
+    <p class="sub">บอกหมอดูว่าคุณอยากรู้เรื่องอะไร แล้วไพ่จะพูดแทนดวงชะตา</p>
+    <div class="mini-cards" id="miniCards"></div>
+    <textarea class="question-input" id="questionInput"
+      placeholder="เช่น: ความรักของฉันจะเป็นอย่างไร? / งานที่รอการตัดสินใจจะผ่านไหม? / ฉันควรทำอะไรกับชีวิตในตอนนี้?"></textarea>
+    <button class="ask-btn" id="askBtn" onclick="askFortune()">
+      🔮 ขอคำทำนายจากไพ่
+    </button>
+  </div>
+
+  <!-- ─── STEP 3: AI Fortune ─── -->
+  <div class="ai-response" id="aiResponse">
+    <div class="ai-response-inner">
+      <div class="ai-header">
+        <div class="ai-avatar">🔮</div>
+        <div>
+          <div class="ai-title">หมอดู Among Us · ผู้อ่านพลังงานจักรวาล</div>
+          <div class="ai-subtitle">กำลังตีความไพ่ทั้ง 3 ใบให้คุณ...</div>
+        </div>
+      </div>
+      <div class="rc-chips" id="rcChips"></div>
+      <div class="fortune-text" id="fortuneText">
+        <div class="loader"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Card Meanings ─── -->
+  <div class="result-cards" id="resultCards"></div>
+
+  <!-- ─── Ask Again / Reset ─── -->
+  <div id="actionRow" style="display:none;text-align:center;margin-top:1.5rem;display:none;gap:1rem;flex-wrap:wrap;justify-content:center;">
+    <button class="ask-btn" style="width:auto;padding:.8rem 2rem;" onclick="askAgain()">💬 ถามคำถามใหม่</button>
+    <button class="reset-btn" style="margin:0;" onclick="resetGame()">🔄 เริ่มเลือกไพ่ใหม่</button>
+  </div>
+
+</div>
+
+<script>
+const CARDS = [
+  {id:1,  name:"ผู้บุกเบิก",     color:"#ff4444",bodyColor:"#cc0000",meaning:"การเดินทางใหม่กำลังเริ่มต้น โอกาสทองอยู่ตรงหน้า จงก้าวออกไปด้วยความกล้า",emoji:"🚀"},
+  {id:2,  name:"ผู้ทรยศ",        color:"#8b00ff",bodyColor:"#6600cc",meaning:"ระวังคนรอบข้างที่ไม่จริงใจ มีบางอย่างซ่อนเร้นอยู่ใต้พื้นผิว",emoji:"🗡️"},
+  {id:3,  name:"ผู้พิทักษ์",     color:"#00aaff",bodyColor:"#0077cc",meaning:"คุณจะได้รับการคุ้มครองจากคนที่รัก ความปลอดภัยอยู่ในมือคุณ",emoji:"🛡️"},
+  {id:4,  name:"ผู้ชนะ",         color:"#ffaa00",bodyColor:"#cc8800",meaning:"ชัยชนะกำลังรอคุณอยู่ ความพยายามของคุณจะได้รับผลตอบแทน",emoji:"🏆"},
+  {id:5,  name:"นักสำรวจ",       color:"#00cc66",bodyColor:"#009944",meaning:"การค้นพบสิ่งใหม่จะเปลี่ยนชีวิตคุณ เปิดใจรับประสบการณ์แปลกใหม่",emoji:"🔍"},
+  {id:6,  name:"ผู้รักษา",       color:"#ff66aa",bodyColor:"#cc4488",meaning:"สุขภาพและความเป็นอยู่ที่ดีกำลังมาถึง ดูแลตัวเองและคนที่คุณรัก",emoji:"💊"},
+  {id:7,  name:"วิศวกร",         color:"#ff8800",bodyColor:"#cc6600",meaning:"ทักษะของคุณจะนำพาความสำเร็จ ใช้ความคิดสร้างสรรค์",emoji:"🔧"},
+  {id:8,  name:"ผู้พยากรณ์",     color:"#9966ff",bodyColor:"#7744cc",meaning:"สัญชาตญาณของคุณถูกต้อง เชื่อในความรู้สึกภายในและตัดสินใจด้วยหัวใจ",emoji:"🔮"},
+  {id:9,  name:"นักรบ",          color:"#ff2200",bodyColor:"#cc1100",meaning:"ความแข็งแกร่งภายในจะช่วยคุณผ่านอุปสรรค สู้ต่อไปอย่าถอย",emoji:"⚔️"},
+  {id:10, name:"ผู้สื่อสาร",     color:"#00ddff",bodyColor:"#00aacc",meaning:"การสื่อสารและการแสดงออกจะนำโชค พูดความจริงในใจ",emoji:"📡"},
+  {id:11, name:"นักดนตรี",       color:"#ff66ff",bodyColor:"#cc44cc",meaning:"ความสุขและสนุกสนานกำลังมาเยือน ปล่อยตัวปล่อยใจเพลิดเพลิน",emoji:"🎵"},
+  {id:12, name:"ผู้นำ",          color:"#ffcc00",bodyColor:"#ccaa00",meaning:"ผู้คนจะมองคุณเป็นแบบอย่าง นำพาผู้อื่นด้วยความเมตตา",emoji:"👑"},
+  {id:13, name:"นักวิทยาศาสตร์", color:"#44ffaa",bodyColor:"#22cc88",meaning:"ความรู้คือพลัง การเรียนรู้จะเปิดประตูแห่งโชค",emoji:"🔬"},
+  {id:14, name:"นักผจญภัย",      color:"#ff9944",bodyColor:"#cc7722",meaning:"การผจญภัยที่ยิ่งใหญ่รออยู่ จงออกเดินทางค้นหาความหมายใหม่",emoji:"🗺️"},
+  {id:15, name:"ผู้ปกป้อง",      color:"#6688ff",bodyColor:"#4466cc",meaning:"ความรักและครอบครัวจะนำพาความสุข ปกป้องสิ่งที่คุณรัก",emoji:"❤️"},
+  {id:16, name:"นักเวทย์",       color:"#aa44ff",bodyColor:"#8822cc",meaning:"พลังแห่งจักรวาลส่งพลังงานดีมาให้ เวลาแห่งการเปลี่ยนแปลงมาถึงแล้ว",emoji:"✨"},
+  {id:17, name:"นักธุรกิจ",      color:"#33cc33",bodyColor:"#229922",meaning:"โอกาสทางธุรกิจและการเงินกำลังจะมา ลงทุนด้วยความรอบคอบ",emoji:"💰"},
+  {id:18, name:"ผู้สร้าง",       color:"#ff5533",bodyColor:"#cc3311",meaning:"ความคิดสร้างสรรค์ของคุณจะสร้างสิ่งยิ่งใหญ่ เริ่มสร้างฝันวันนี้",emoji:"🏗️"},
+  {id:19, name:"นักสมาธิ",       color:"#aaaaff",bodyColor:"#8888cc",meaning:"ความสงบและสติปัญญาจะนำทาง หยุดพักและฟังเสียงภายใน",emoji:"🧘"},
+  {id:20, name:"ผู้ช่วยเหลือ",   color:"#ff3388",bodyColor:"#cc1166",meaning:"การให้และแบ่งปันจะนำความสุขมาสู่ชีวิต ช่วยเหลือผู้อื่นด้วยใจบริสุทธิ์",emoji:"🤝"},
+  {id:21, name:"นักปราชญ์",      color:"#ddaa00",bodyColor:"#bb8800",meaning:"ปัญญาจากประสบการณ์จะเป็นเกราะป้องกัน เรียนรู้จากอดีตและก้าวสู่อนาคต",emoji:"📚"},
+  {id:22, name:"ผู้รอด",         color:"#00ff88",bodyColor:"#00cc66",meaning:"คุณผ่านช่วงยากมาได้ ความแข็งแกร่งของคุณพิสูจน์ตัวเองแล้ว",emoji:"🌟"},
+  {id:23, name:"นักฝัน",         color:"#ff88cc",bodyColor:"#cc66aa",meaning:"ความฝันของคุณไม่ไกลเกินเอื้อม ก้าวต่อไปด้วยความหวังและศรัทธา",emoji:"💫"},
+  {id:24, name:"ผู้เชื่อมต่อ",   color:"#00cccc",bodyColor:"#009999",meaning:"ความสัมพันธ์ใหม่ที่มีความหมายจะเกิดขึ้น เปิดใจพบผู้คนใหม่",emoji:"🔗"},
+  {id:25, name:"นักยุทธศาสตร์",  color:"#8855ff",bodyColor:"#6633cc",meaning:"การวางแผนรอบคอบจะนำชัยชนะ ใช้สติปัญญาและความอดทน",emoji:"♟️"},
+  {id:26, name:"ผู้ปลุกเร้า",    color:"#ff6600",bodyColor:"#cc4400",meaning:"พลังงานของคุณกำลังพุ่งสูง สร้างแรงบันดาลใจให้ผู้อื่น",emoji:"🔥"},
+  {id:27, name:"นักสังเกต",      color:"#77aaff",bodyColor:"#5588cc",meaning:"ความระมัดระวังจะช่วยหลีกเลี่ยงปัญหา มองให้ทะลุผ่าน",emoji:"👁️"},
+  {id:28, name:"ผู้รื้อฟื้น",    color:"#ff44bb",bodyColor:"#cc2299",meaning:"การเริ่มต้นใหม่กำลังมา ปล่อยวางสิ่งเก่าที่ไม่เป็นประโยชน์",emoji:"🌱"},
+  {id:29, name:"นักท่องจักรวาล", color:"#4444ff",bodyColor:"#2222cc",meaning:"จิตวิญญาณคุณเชื่อมต่อกับสิ่งที่ยิ่งใหญ่กว่า ไว้วางใจในจักรวาล",emoji:"🌌"},
+  {id:30, name:"ผู้ตื่นรู้",     color:"#00ffcc",bodyColor:"#00ccaa",meaning:"ความตื่นรู้ทางจิตวิญญาณกำลังเปิดออก ยุคใหม่แห่งชีวิตกำลังเริ่มต้น",emoji:"🌅"}
+];
+
+const POS = ["อดีต","ปัจจุบัน","อนาคต"];
+const POS_FULL = ["อดีต — สิ่งที่ผ่านมา","ปัจจุบัน — ช่วงเวลานี้","อนาคต — สิ่งที่กำลังมา"];
+
+let deck=[], selected=[];
+
+function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+
+function amogus(color,bodyColor,emoji,size=80){
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="65" rx="32" ry="40" fill="${color}"/>
+    <ellipse cx="50" cy="35" rx="28" ry="25" fill="${color}"/>
+    <ellipse cx="52" cy="30" rx="18" ry="13" fill="#aeeeff" opacity="0.9"/>
+    <ellipse cx="55" cy="27" rx="8" ry="5" fill="white" opacity="0.5"/>
+    <rect x="76" y="50" width="14" height="22" rx="5" fill="${bodyColor}"/>
+    <ellipse cx="38" cy="103" rx="12" ry="8" fill="${bodyColor}"/>
+    <ellipse cx="62" cy="103" rx="12" ry="8" fill="${bodyColor}"/>
+    <text x="50" y="75" text-anchor="middle" font-size="18">${emoji}</text>
+  </svg>`;
+}
+
+function buildDeck(){
+  const area=document.getElementById('cardsArea');
+  area.innerHTML='';
+  deck=shuffle([...CARDS]);
+  selected=[];
+  document.getElementById('questionArea').classList.remove('visible');
+  document.getElementById('aiResponse').classList.remove('visible');
+  document.getElementById('resultCards').classList.remove('visible');
+  document.getElementById('resultCards').innerHTML='';
+  document.getElementById('actionRow').style.display='none';
+  document.getElementById('phaseText').textContent='✨ แตะที่ไพ่เพื่อเลือก 3 ใบที่ดึงดูดใจคุณ';
+
+  deck.forEach((card,i)=>{
+    const w=document.createElement('div');
+    w.className='card-wrapper';
+    w.innerHTML=`<div class="card" id="card-${i}">
+      <div class="card-face card-back"><div class="suit">🔮</div><div class="label">ไพ่ทำนาย</div></div>
+      <div class="card-face card-front">${amogus(card.color,card.bodyColor,card.emoji,75)}<div class="card-name">${card.name}</div></div>
+    </div>`;
+    w.addEventListener('click',e=>pickCard(e,i,card));
+    area.appendChild(w);
+  });
+}
+
+function pickCard(e,idx,card){
+  if(selected.length>=3)return;
+  const el=document.getElementById(`card-${idx}`);
+  if(el.classList.contains('flipped')||el.classList.contains('selected'))return;
+  createRipple(e.clientX,e.clientY);
+  for(let i=0;i<8;i++)createTeardrop(e.clientX,e.clientY,card.color);
+  el.classList.add('flipped');
+  selected.push({card,idx});
+  setTimeout(()=>{
+    el.classList.add('selected');
+    const rem=3-selected.length;
+    const pt=document.getElementById('phaseText');
+    if(rem>0){pt.textContent=`✨ เลือกอีก ${rem} ใบ`;}
+    else{
+      pt.textContent='🌟 ไพ่ทั้ง 3 ใบถูกเลือกแล้ว! ถามคำถามที่อยู่ในใจได้เลย';
+      document.querySelectorAll('.card').forEach(c=>{ if(!c.classList.contains('selected'))c.classList.add('dimmed'); });
+      setTimeout(showQuestionArea,700);
+    }
+  },300);
+}
+
+function showQuestionArea(){
+  const mini=document.getElementById('miniCards');
+  mini.innerHTML='';
+  selected.forEach(({card},i)=>{
+    const d=document.createElement('div');
+    d.className='mini-card';
+    d.innerHTML=`<div class="mc-pos">${POS[i]}</div>${amogus(card.color,card.bodyColor,card.emoji,40)}<div class="mc-name">${card.name}</div>`;
+    mini.appendChild(d);
+  });
+  const qa=document.getElementById('questionArea');
+  qa.classList.add('visible');
+  setTimeout(()=>qa.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+async function askFortune(){
+  const q=document.getElementById('questionInput').value.trim();
+  if(!q){
+    const inp=document.getElementById('questionInput');
+    inp.style.borderColor='#f87171';inp.focus();
+    setTimeout(()=>inp.style.borderColor='',1500);
+    return;
+  }
+  const btn=document.getElementById('askBtn');
+  btn.disabled=true;btn.innerHTML='⏳ กำลังอ่านไพ่...';
+
+  const aiR=document.getElementById('aiResponse');
+  aiR.classList.add('visible');
+  document.getElementById('fortuneText').innerHTML='<div class="loader"><span></span><span></span><span></span></div>';
+
+  // chips
+  document.getElementById('rcChips').innerHTML=selected.map(({card},i)=>
+    `<div class="rc-chip"><div class="dot" style="background:${card.color}"></div>${POS[i]}: ${card.name}</div>`
+  ).join('');
+
+  setTimeout(()=>aiR.scrollIntoView({behavior:'smooth',block:'start'}),100);
+
+  const cardDesc=selected.map(({card},i)=>
+    `ไพ่ที่ ${i+1} (${POS_FULL[i]}): "${card.name}" — ความหมาย: ${card.meaning}`
+  ).join('\n');
+
+  const prompt=`คุณคือหมอดูผู้เชี่ยวชาญด้านไพ่ทำนายในจักรวาล Among Us มีพลังอ่านดวงชะตาจากไพ่ทั้ง 3 ใบ ตอบเป็นภาษาไทยเท่านั้น มีความลึกซึ้ง อบอุ่น และมีพลังงานลึกลับของจักรวาล
+
+ผู้ถามเลือกไพ่ทั้ง 3 ใบดังนี้:
+${cardDesc}
+
+คำถามของผู้ถาม: "${q}"
+
+กรุณาตีความโดยแบ่งเป็น 5 ส่วนต่อเนื่องกัน:
+1. ✦ พลังงานรวมของไพ่ทั้ง 3 ใบ (2-3 ประโยค บอกภาพรวมและพลังงานที่ไพ่ส่งมา)
+2. ✦ ไพ่ใบที่ 1 — อดีต: อธิบายว่าอดีตมีผลต่อคำถามอย่างไร (2-3 ประโยค)
+3. ✦ ไพ่ใบที่ 2 — ปัจจุบัน: สถานการณ์ตอนนี้เป็นอย่างไร ไพ่บอกอะไร (2-3 ประโยค)
+4. ✦ ไพ่ใบที่ 3 — อนาคต: โชคชะตาพาไปทางไหน สิ่งใดกำลังจะเกิดขึ้น (2-3 ประโยค)
+5. ✦ คำแนะนำจากหมอดู: ข้อแนะนำเชิงปฏิบัติที่เชื่อมโยงกับไพ่และคำถาม (2-3 ประโยค)
+
+เขียนด้วยน้ำเสียงที่เต็มไปด้วยพลังจักรวาล อบอุ่นหัวใจ และลึกซึ้ง`;
+
+  try{
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data=await resp.json();
+    const text=data.content?.map(b=>b.text||'').join('')||'ขออภัย ไม่สามารถอ่านพลังงานไพ่ได้ในขณะนี้ กรุณาลองใหม่';
+    await typewriter(text);
+  }catch(err){
+    document.getElementById('fortuneText').innerHTML='<span style="color:#f87171">⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่</span>';
+  }
+
+  showResultCards();
+  btn.disabled=false;
+  btn.innerHTML='🔮 ถามคำถามใหม่';
+  const ar=document.getElementById('actionRow');
+  ar.style.display='flex';
+}
+
+function typewriter(text){
+  return new Promise(resolve=>{
+    const el=document.getElementById('fortuneText');
+    el.innerHTML='';
+    const cursor=document.createElement('span');
+    cursor.className='cursor';
+    el.appendChild(cursor);
+    let i=0;
+    function next(){
+      if(i<text.length){
+        cursor.insertAdjacentText('beforebegin',text[i]);
+        i++;
+        const ch=text[i-1];
+        const delay=ch==='\n'?60:(ch==='.'||ch==='!'||ch==='?')? 50:16;
+        setTimeout(next,delay);
+      } else { cursor.remove();resolve(); }
+    }
+    next();
+  });
+}
+
+function showResultCards(){
+  const area=document.getElementById('resultCards');
+  area.innerHTML='';
+  selected.forEach(({card},i)=>{
+    const d=document.createElement('div');
+    d.className='result-card';
+    d.innerHTML=`<div class="pos-label">${POS_FULL[i]}</div>${amogus(card.color,card.bodyColor,card.emoji,80)}<div class="rc-name">${card.name}</div><div class="rc-meaning">${card.meaning}</div>`;
+    area.appendChild(d);
+  });
+  area.classList.add('visible');
+}
+
+function askAgain(){
+  document.getElementById('questionInput').value='';
+  document.getElementById('aiResponse').classList.remove('visible');
+  document.getElementById('resultCards').classList.remove('visible');
+  document.getElementById('resultCards').innerHTML='';
+  document.getElementById('actionRow').style.display='none';
+  document.getElementById('askBtn').innerHTML='🔮 ขอคำทำนายจากไพ่';
+  document.getElementById('questionArea').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function resetGame(){
+  document.getElementById('questionInput').value='';
+  document.getElementById('askBtn').innerHTML='🔮 ขอคำทำนายจากไพ่';
+  buildDeck();
+  window.scrollTo({behavior:'smooth',top:0});
+}
+
+function createRipple(x,y){
+  const r=document.createElement('div');r.className='ripple';
+  const sz=200+Math.random()*200;
+  r.style.cssText=`width:${sz}px;height:${sz}px;left:${x}px;top:${y}px;`;
+  document.body.appendChild(r);r.addEventListener('animationend',()=>r.remove());
+}
+function createTeardrop(x,y,color){
+  const t=document.createElement('div');t.className='teardrop';
+  const ox=(Math.random()-0.5)*70;
+  t.style.cssText=`left:${x+ox}px;top:${y}px;background:${color};opacity:0.85;animation-delay:${Math.random()*0.3}s;`;
+  document.body.appendChild(t);t.addEventListener('animationend',()=>t.remove());
+}
+
+buildDeck();
+</script>
+</body>
+</html>
+
